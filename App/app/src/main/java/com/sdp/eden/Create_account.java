@@ -3,13 +3,13 @@ package com.sdp.eden;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -30,7 +30,7 @@ public class Create_account extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        //initializing variables
         setContentView(R.layout.registration);
         mEmailField = findViewById(R.id.emailfield);
         mNameField = findViewById(R.id.namefield);
@@ -47,8 +47,7 @@ public class Create_account extends AppCompatActivity {
                 if(mPasswordField.getText().toString().equals(mPasswordConfirmField.getText().toString())){
                     createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
                 }else{
-                    Toast.makeText(Create_account.this, "Passwords are different.",
-                            Toast.LENGTH_SHORT).show();
+                    Snackbar.make(findViewById(R.id.viewSnack), "Passwords do not match! try again.", Snackbar.LENGTH_LONG).show(); // Kieran - changed toast to snackbar
                 }
             }
         });
@@ -62,7 +61,10 @@ public class Create_account extends AppCompatActivity {
         if (TextUtils.isEmpty(email)) {
             mEmailField.setError("Required.");
             valid = false;
-        } else {
+        } else if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+            mEmailField.setError("Email form is required");
+        }
+        else {
             mEmailField.setError(null);
         }
 
@@ -70,7 +72,10 @@ public class Create_account extends AppCompatActivity {
         if (TextUtils.isEmpty(password)) {
             mPasswordField.setError("Required.");
             valid = false;
-        } else {
+        } else if(password.length()<6){
+            mEmailField.setError("password requires at least 6 characters");
+        }
+        else {
             mPasswordField.setError(null);
         }
 
@@ -81,10 +86,7 @@ public class Create_account extends AppCompatActivity {
         final String userId = mNameField.getText().toString();
         final String eMail = mEmailField.getText().toString();
 
-        //If the filled email address is in invalid form, then stop startingpage and show toast.
         if (!validateForm()) {
-            Toast.makeText(Create_account.this, "Invalid email form.",
-                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -96,6 +98,9 @@ public class Create_account extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             // Sign up success, update UI with the signed-in user's information
                             FirebaseUser currentUser = mAuth.getCurrentUser();
+
+                            Log.d(TAG, "Created account.");
+                            Log.d(TAG, "User email is: "+currentUser.getEmail());  // Bianca - added some logs.
                             updateUI(currentUser);
 
                         } else {
@@ -113,15 +118,11 @@ public class Create_account extends AppCompatActivity {
     //Update the UI, if with valid user, then enter the gameMainActivity.
     private void updateUI(FirebaseUser user) {
         if (user != null) {
-            Toast.makeText(Create_account.this, "Starting_page succeeded.",
-                    Toast.LENGTH_SHORT).show();
-
             Intent intent = new Intent(this, Eden_main.class);
             startActivity(intent);
 
         } else {
-            Toast.makeText(Create_account.this, "Starting_page failed.",
-                    Toast.LENGTH_SHORT).show();
+            Snackbar.make(findViewById(R.id.viewSnack), "Problem creating user, please try again.", Snackbar.LENGTH_LONG).show();
 
         }
     }
